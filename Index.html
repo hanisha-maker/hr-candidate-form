@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candidate Information Form</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3c5e;
+    --primary-light: #e8f0f7;
+    --accent: #2979c8;
+    --accent-hover: #1a5fa8;
+    --success: #1b6e3a;
+    --success-bg: #e8f5ed;
+    --border: #d0dae6;
+    --text: #1a2d3d;
+    --muted: #6b7f92;
+    --bg: #f4f7fb;
+    --white: #ffffff;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(26,60,94,0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--primary); color: white; padding: 2rem 1.5rem 1.5rem; text-align: center; }
+  .header-logo { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.5rem; }
+  .header h1 { font-size: 1.7rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .header p { font-size: 0.92rem; opacity: 0.8; }
+
+  /* Progress bar */
+  .progress-wrap { background: var(--white); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 12px; }
+  .progress-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s ease; }
+  .progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* Main */
+  .container { max-width: 780px; margin: 2rem auto; padding: 0 1rem 4rem; }
+
+  /* Section cards */
+  .section { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+  .section-title { font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .section-title i { font-size: 16px; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  @media(max-width:600px){ .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Fields */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .field label .req { color: #c0392b; margin-left: 3px; }
+  .field input, .field select, .field textarea {
+    padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 14px; color: var(--text); background: var(--white);
+    transition: border 0.2s, box-shadow 0.2s; outline: none; font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(41,121,200,0.12);
+  }
+  .field input.error, .field select.error { border-color: #c0392b; }
+  .field .hint { font-size: 11.5px; color: var(--muted); }
+  .field .err-msg { font-size: 11.5px; color: #c0392b; display: none; }
+  .field input.error ~ .err-msg, .field select.error ~ .err-msg { display: block; }
+
+  /* File upload */
+  .file-area { border: 2px dashed var(--border); border-radius: 8px; padding: 1.25rem; text-align: center; cursor: pointer; transition: border 0.2s, background 0.2s; background: var(--bg); }
+  .file-area:hover { border-color: var(--accent); background: var(--primary-light); }
+  .file-area.has-file { border-color: #1b6e3a; background: var(--success-bg); }
+  .file-area input[type=file] { display: none; }
+  .file-area .file-icon { font-size: 28px; color: var(--muted); margin-bottom: 6px; }
+  .file-area .file-label { font-size: 13px; color: var(--muted); }
+  .file-area .file-label span { color: var(--accent); font-weight: 500; cursor: pointer; }
+  .file-area .file-name { font-size: 13px; color: var(--success); font-weight: 500; margin-top: 4px; }
+
+  /* CTC table */
+  .ctc-card { background: var(--primary-light); border: 1px solid #c0d4e9; border-radius: 8px; overflow: hidden; }
+  .ctc-card table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .ctc-card th { background: var(--primary); color: white; padding: 8px 14px; text-align: left; font-weight: 500; font-size: 12px; }
+  .ctc-card td { padding: 7px 14px; border-bottom: 1px solid #d0dae6; }
+  .ctc-card tr:last-child td { border-bottom: none; }
+  .ctc-card tr.section-row td { background: #dce8f4; font-weight: 600; font-size: 12px; color: var(--primary); letter-spacing: 0.5px; padding: 5px 14px; }
+  .ctc-card tr.total-row td { background: var(--primary); color: white; font-weight: 600; }
+  .ctc-card td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .ctc-agree { display: flex; align-items: flex-start; gap: 10px; margin-top: 1rem; padding: 0.9rem 1rem; background: var(--white); border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; }
+  .ctc-agree input[type=checkbox] { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .ctc-agree label { font-size: 13px; color: var(--text); cursor: pointer; line-height: 1.5; }
+  .ctc-agree.error-border { border-color: #c0392b; }
+
+  /* Declaration */
+  .declaration { background: #fffbf0; border: 1px solid #f0d98c; border-radius: 8px; padding: 1rem 1.25rem; font-size: 13px; color: #5a4a00; line-height: 1.6; }
+
+  /* Submit */
+  .submit-wrap { text-align: center; margin-top: 1.5rem; }
+  .btn-submit { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 14px 48px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s, transform 0.1s; letter-spacing: 0.3px; }
+  .btn-submit:hover { background: var(--accent-hover); }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+
+  /* Success screen */
+  .success-screen { display: none; text-align: center; padding: 3rem 1rem; }
+  .success-screen .tick { font-size: 60px; color: var(--success); margin-bottom: 1rem; }
+  .success-screen h2 { font-size: 1.5rem; color: var(--primary); margin-bottom: 0.5rem; }
+  .success-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .btn-download { display: inline-block; margin-top: 1.5rem; background: var(--success); color: white; border: none; border-radius: 8px; padding: 12px 36px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-download:hover { background: #155c2e; }
+  .btn-new { display: inline-block; margin-top: 0.75rem; margin-left: 12px; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 8px; padding: 12px 28px; font-size: 14px; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Human Resources</div>
+  <h1>Candidate Information Form</h1>
+  <p style="font-size:1rem; font-weight:600; background:rgba(255,255,255,0.15); display:inline-block; padding:4px 18px; border-radius:99px; margin-bottom:0.4rem;">Position: Associate Engineer (RTMC)</p><br/>
+  <p>Please fill in all details carefully. This information will be used for your HR records.</p>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+  <div class="progress-label" id="progressLabel">0 of 6 sections</div>
+</div>
+
+<div class="container" id="formContainer">
+
+  <!-- Section 1: Personal Info -->
+  <div class="section">
+    <div class="section-title">&#128100; Personal Information</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Full Name <span class="req">*</span></label>
+        <input type="text" id="fullName" placeholder="Enter your full name" oninput="updateProgress()"/>
+        <span class="err-msg">Please enter your full name</span>
+      </div>
+      <div class="field">
+        <label>Contact Number <span class="req">*</span></label>
+        <input type="tel" id="contactNumber" placeholder="+91 XXXXX XXXXX" maxlength="15" oninput="updateProgress()"/>
+        <span class="err-msg">Enter a valid 10-digit number</span>
+      </div>
+      <div class="field">
+        <label>Email ID <span class="req">*</span></label>
+        <input type="email" id="emailId" placeholder="yourname@email.com" oninput="updateProgress()"/>
+        <span class="err-msg">Enter a valid email address</span>
+      </div>
+      <div class="field">
+        <label>Date of Joining <span class="req">*</span></label>
+        <input type="date" id="doj" oninput="updateProgress()"/>
+        <span class="err-msg">Please select a date</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Location -->
+  <div class="section">
+    <div class="section-title">&#128205; Location Details</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Current Location <span class="req">*</span></label>
+        <input type="text" id="currentLocation" placeholder="City, State" oninput="updateProgress()"/>
+        <span class="err-msg">Please enter your current location</span>
+      </div>
+      <div class="field">
+        <label>Preferable Location <span class="req">*</span></label>
+        <select id="preferableLocation" onchange="updateProgress()">
+          <option value="">-- Select Preferred Location --</option>
+          <option>Malegaon</option>
+          <option>Maliwada</option>
+          <option>Igatpuri</option>
+          <option>Nidhona</option>
+          <option>Amne</option>
+        </select>
+        <span class="err-msg">Please select a preferred location</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Education -->
+  <div class="section">
+    <div class="section-title">&#127891; Education Details</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Highest Education Qualification <span class="req">*</span></label>
+        <select id="highestEdu" onchange="updateProgress()">
+          <option value="">-- Select Qualification --</option>
+          <option>10th (SSC)</option>
+          <option>12th (HSC)</option>
+          <option>Diploma</option>
+          <option>ITI</option>
+          <option>Bachelor of Arts (BA)</option>
+          <option>Bachelor of Commerce (BCom)</option>
+          <option>Bachelor of Science (BSc)</option>
+          <option>Bachelor of Engineering (BE/BTech)</option>
+          <option>Bachelor of Computer Applications (BCA)</option>
+          <option>Bachelor of Business Administration (BBA)</option>
+          <option>Master of Arts (MA)</option>
+          <option>Master of Commerce (MCom)</option>
+          <option>Master of Science (MSc)</option>
+          <option>Master of Engineering (ME/MTech)</option>
+          <option>Master of Business Administration (MBA)</option>
+          <option>Master of Computer Applications (MCA)</option>
+          <option>PhD / Doctorate</option>
+          <option>Other</option>
+        </select>
+        <span class="err-msg">Please select your qualification</span>
+      </div>
+      <div class="field">
+        <label>Year of Passing <span class="req">*</span></label>
+        <select id="yearOfPassing" onchange="updateProgress()">
+          <option value="">-- Select Year --</option>
+        </select>
+        <span class="err-msg">Please select year of passing</span>
+      </div>
+
+    </div>
+    <!-- Certificate Upload -->
+    <div style="margin-top:1.25rem">
+      <div class="field">
+        <label>Upload Highest Education Certificate <span class="req">*</span></label>
+        <div class="file-area" id="certArea" onclick="document.getElementById('certFile').click()">
+          <input type="file" id="certFile" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileUpload(this,'certArea','certFileName')"/>
+          <div class="file-icon">&#128196;</div>
+          <div class="file-label">Drag & drop or <span>browse file</span></div>
+          <div class="hint" style="margin-top:4px; font-size:11px; color:var(--muted)">Accepted: PDF, JPG, PNG (max 5MB)</div>
+          <div class="file-name" id="certFileName" style="display:none"></div>
+        </div>
+        <span class="err-msg" id="certErr" style="display:none; font-size:11.5px; color:#c0392b;">Please upload your education certificate</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: CTC -->
+  <div class="section">
+    <div class="section-title">&#128181; CTC Structure &amp; Annexure</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1rem;">Please review the offered CTC breakup below. This is your complete compensation structure.</p>
+
+    <div class="ctc-card">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Monthly (₹)</th><th>Yearly (₹)</th></tr>
+        </thead>
+        <tbody>
+          <tr class="section-row"><td colspan="3">EARNINGS</td></tr>
+          <tr><td>Basic Salary</td><td>14,500</td><td>1,74,000</td></tr>
+          <tr><td>Other Allowances</td><td>6,972</td><td>83,666</td></tr>
+          <tr><td>Bonus (Performance Linked)</td><td>1,208</td><td>14,494</td></tr>
+          <tr class="section-row"><td>GROSS SALARY</td><td>22,680</td><td>2,72,160</td></tr>
+
+          <tr class="section-row"><td colspan="3">DEDUCTIONS (Employee)</td></tr>
+          <tr><td>Employee PF</td><td>1,740</td><td>20,880</td></tr>
+          <tr><td>Employee ESIC</td><td>109</td><td>1,305</td></tr>
+          <tr><td>Professional Tax</td><td>200</td><td>2,400</td></tr>
+
+          <tr class="section-row"><td>TAKE HOME SALARY</td><td>20,740</td><td>2,48,880</td></tr>
+
+          <tr class="section-row"><td colspan="3">STATUTORY BENEFITS (Employer)</td></tr>
+          <tr><td>Employer PF</td><td>1,740</td><td>20,880</td></tr>
+          <tr><td>Employer ESIC</td><td>471</td><td>5,655</td></tr>
+
+          <tr class="section-row"><td>FIXED CTC</td><td>24,420</td><td>2,93,040</td></tr>
+          <tr><td>PLI (Performance Linked Incentive)</td><td>—</td><td>—</td></tr>
+          <tr class="total-row"><td>TOTAL CTC (Including ESIC)</td><td>25,000</td><td>3,00,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ctc-agree" id="ctcAgreeBox" onclick="toggleCTC()">
+      <input type="checkbox" id="ctcAgree" onchange="updateProgress()"/>
+      <label for="ctcAgree">I have read and understood the above CTC structure. I agree to the offered compensation package of <strong>₹3,00,000 per annum (Total CTC including ESIC)</strong> and accept it without any conditions.</label>
+    </div>
+    <span class="err-msg" id="ctcErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must agree to the CTC structure to proceed</span>
+  </div>
+
+  <!-- Section 5: Declaration -->
+  <div class="section">
+    <div class="section-title">&#128221; Declaration</div>
+    <div class="declaration">
+      I hereby declare that all information provided in this form is true, complete, and accurate to the best of my knowledge. I understand that any false or misleading information may result in the rejection of my application or termination of employment. I authorize the organization to verify any information provided herein.
+    </div>
+    <div class="ctc-agree" id="declAgreeBox" style="margin-top:1rem;" onclick="toggleDecl()">
+      <input type="checkbox" id="declAgree" onchange="updateProgress()"/>
+      <label for="declAgree">I have read the above declaration and confirm that all information provided is accurate and truthful.</label>
+    </div>
+    <span class="err-msg" id="declErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must accept the declaration to submit</span>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-wrap">
+    <button class="btn-submit" onclick="submitForm()">&#10003; &nbsp;Submit My Information</button>
+    <p style="font-size:12px; color:var(--muted); margin-top:0.75rem;">Your information will be saved and an Excel record will be generated.</p>
+  </div>
+</div>
+
+<!-- Success Screen -->
+<div class="container" id="successContainer" style="display:none;">
+  <div class="section success-screen" id="successScreen">
+    <div class="tick">&#10004;</div>
+    <h2>Form Submitted Successfully!</h2>
+    <p>Thank you, <strong id="successName"></strong>.<br/>Your information has been recorded.<br/>Our HR team will get in touch with you shortly.</p>
+    <div style="margin-top:1.5rem; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn-download" onclick="downloadExcel()">&#8595; Download My Excel Record</button>
+      <button class="btn-new" onclick="resetForm()">Submit Another Response</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Fill year dropdown
+(function(){
+  const sel = document.getElementById('yearOfPassing');
+  const yr = new Date().getFullYear();
+  for(let y = yr; y >= 1980; y--){
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    sel.appendChild(o);
+  }
+})();
+
+// Progress tracking
+function updateProgress(){
+  const fields = ['fullName','contactNumber','emailId','doj','currentLocation','preferableLocation','highestEdu','yearOfPassing'];
+  const filled = fields.filter(id => document.getElementById(id).value.trim() !== '').length;
+  const ctcOk = document.getElementById('ctcAgree').checked ? 1 : 0;
+  const declOk = document.getElementById('declAgree').checked ? 1 : 0;
+  const certOk = document.getElementById('certFile').files.length > 0 ? 1 : 0;
+  const total = fields.length + 3;
+  const done = filled + ctcOk + declOk + certOk;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '% complete';
+}
+
+function toggleCTC(){
+  const cb = document.getElementById('ctcAgree');
+  cb.checked = !cb.checked;
+  updateProgress();
+}
+function toggleDecl(){
+  const cb = document.getElementById('declAgree');
+  cb.checked = !cb.checked;
+  updateProgress();
+}
+
+function handleFileUpload(input, areaId, nameId){
+  const file = input.files[0];
+  const area = document.getElementById(areaId);
+  const nameEl = document.getElementById(nameId);
+  if(file){
+    if(file.size > 5*1024*1024){ alert('File too large. Please upload under 5MB.'); input.value=''; return; }
+    area.classList.add('has-file');
+    nameEl.textContent = '✓ ' + file.name;
+    nameEl.style.display = 'block';
+    document.getElementById('certErr').style.display = 'none';
+    updateProgress();
+  }
+}
+
+let submittedData = null;
+
+function submitForm(){
+  let valid = true;
+
+  const req = [
+    {id:'fullName', msg:'Please enter your full name'},
+    {id:'contactNumber', msg:'Enter contact number'},
+    {id:'emailId', msg:'Enter valid email'},
+    {id:'doj', msg:'Select date of joining'},
+    {id:'currentLocation', msg:'Enter current location'},
+    {id:'preferableLocation', msg:'Select preferred location'},
+    {id:'highestEdu', msg:'Select qualification'},
+    {id:'yearOfPassing', msg:'Select year of passing'},
+
+  ];
+
+  req.forEach(r => {
+    const el = document.getElementById(r.id);
+    if(!el.value.trim()){
+      el.classList.add('error');
+      valid = false;
+    } else {
+      el.classList.remove('error');
+    }
+  });
+
+  // Email
+  const email = document.getElementById('emailId');
+  if(email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)){
+    email.classList.add('error'); valid = false;
+  }
+
+  // Phone
+  const phone = document.getElementById('contactNumber');
+  if(phone.value && !/^\+?[\d\s\-]{10,15}$/.test(phone.value)){
+    phone.classList.add('error'); valid = false;
+  }
+
+  // Certificate
+  if(!document.getElementById('certFile').files.length){
+    document.getElementById('certErr').style.display = 'block'; valid = false;
+  } else {
+    document.getElementById('certErr').style.display = 'none';
+  }
+
+  // CTC
+  if(!document.getElementById('ctcAgree').checked){
+    document.getElementById('ctcAgreeBox').classList.add('error-border');
+    document.getElementById('ctcErr').style.display = 'block'; valid = false;
+  } else {
+    document.getElementById('ctcAgreeBox').classList.remove('error-border');
+    document.getElementById('ctcErr').style.display = 'none';
+  }
+
+  // Declaration
+  if(!document.getElementById('declAgree').checked){
+    document.getElementById('declAgreeBox').classList.add('error-border');
+    document.getElementById('declErr').style.display = 'block'; valid = false;
+  } else {
+    document.getElementById('declAgreeBox').classList.remove('error-border');
+    document.getElementById('declErr').style.display = 'none';
+  }
+
+  if(!valid){
+    document.querySelector('.field input.error, .field select.error')?.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  // Collect data
+  const certFile = document.getElementById('certFile').files[0];
+  submittedData = {
+    'Position Applied For': 'Associate Engineer (RTMC)',
+    'Full Name': document.getElementById('fullName').value.trim(),
+    'Contact Number': document.getElementById('contactNumber').value.trim(),
+    'Email ID': document.getElementById('emailId').value.trim(),
+    'Current Location': document.getElementById('currentLocation').value.trim(),
+    'Preferable Location': document.getElementById('preferableLocation').value,
+    'CTC Agreed': 'Yes – ₹3,00,000 p.a.',
+    'Date of Joining': document.getElementById('doj').value,
+    'Highest Education': document.getElementById('highestEdu').value,
+    'Year of Passing': document.getElementById('yearOfPassing').value,
+    'Certificate Uploaded': certFile ? certFile.name : 'N/A',
+    'Submission Date': new Date().toLocaleDateString('en-IN'),
+    'Submission Time': new Date().toLocaleTimeString('en-IN'),
+  };
+
+  // Show loading state
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled = true;
+  btn.textContent = '⏳  Submitting...';
+
+  const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/amnex.com/s/AKfycbx-0KtmSvdveHBHJCvnGDSErL2Q8WsuqmrVy0b8UgZ5avOfienQDnQpLzd3SrnUMiQ5/exec';
+
+  const payload = {
+    'Position Applied For': submittedData['Position Applied For'],
+    'Full Name': submittedData['Full Name'],
+    'Contact Number': submittedData['Contact Number'],
+    'Email ID': submittedData['Email ID'],
+    'Current Location': submittedData['Current Location'],
+    'Preferable Location': submittedData['Preferable Location'],
+    'CTC Agreed': submittedData['CTC Agreed'],
+    'Date of Joining': submittedData['Date of Joining'],
+    'Highest Education': submittedData['Highest Education'],
+    'Year of Passing': submittedData['Year of Passing'],
+    'Certificate File Name': submittedData['Certificate Uploaded'],
+    'Submission Date': submittedData['Submission Date'],
+    'Submission Time': submittedData['Submission Time'],
+  };
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    document.getElementById('formContainer').style.display = 'none';
+    document.getElementById('successContainer').style.display = 'block';
+    document.getElementById('successName').textContent = submittedData['Full Name'];
+    window.scrollTo({top:0, behavior:'smooth'});
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.textContent = '✓  Submit My Information';
+    alert('Submission failed. Please check your internet connection and try again.');
+  });
+}
+
+function downloadExcel(){
+  if(!submittedData) return;
+
+  // Sheet 1: Candidate Info
+  const infoRows = Object.entries(submittedData).map(([k,v]) => [k, v]);
+  const ws1 = XLSX.utils.aoa_to_sheet([['Field', 'Value'], ...infoRows]);
+  ws1['!cols'] = [{wch:28},{wch:40}];
+
+  // Sheet 2: CTC Structure
+  const ctcData = [
+    ['CTC STRUCTURE', 'Monthly (₹)', 'Yearly (₹)'],
+    ['--- EARNINGS ---','',''],
+    ['Basic Salary','14,500','1,74,000'],
+    ['Other Allowances','6,972','83,666'],
+    ['Bonus (PLI)','1,208','14,494'],
+    ['GROSS SALARY','22,680','2,72,160'],
+    ['--- DEDUCTIONS (Employee) ---','',''],
+    ['Employee PF','1,740','20,880'],
+    ['Employee ESIC','109','1,305'],
+    ['Professional Tax','200','2,400'],
+    ['TAKE HOME SALARY','20,740','2,48,880'],
+    ['--- STATUTORY BENEFITS (Employer) ---','',''],
+    ['Employer PF','1,740','20,880'],
+    ['Employer ESIC','471','5,655'],
+    ['FIXED CTC','24,420','2,93,040'],
+    ['PLI','—','—'],
+    ['TOTAL CTC (Including ESIC)','25,000','3,00,000'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(ctcData);
+  ws2['!cols'] = [{wch:35},{wch:18},{wch:18}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Candidate Info');
+  XLSX.utils.book_append_sheet(wb, ws2, 'CTC Structure');
+
+  const fname = 'Candidate_' + submittedData['Full Name'].replace(/\s+/g,'_') + '_' + new Date().toISOString().slice(0,10) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+}
+
+function resetForm(){
+  document.getElementById('successContainer').style.display = 'none';
+  document.getElementById('formContainer').style.display = 'block';
+  document.querySelector('form')?.reset();
+  // Clear fields manually
+  ['fullName','contactNumber','emailId','doj','currentLocation'].forEach(id=>document.getElementById(id).value='');
+  ['preferableLocation','highestEdu','yearOfPassing'].forEach(id=>document.getElementById(id).selectedIndex=0);
+  document.getElementById('ctcAgree').checked = false;
+  document.getElementById('declAgree').checked = false;
+  document.getElementById('certFile').value = '';
+  document.getElementById('certArea').classList.remove('has-file');
+  document.getElementById('certFileName').style.display = 'none';
+  updateProgress();
+  window.scrollTo({top:0});
+}
+</script>
+</body>
+</html>
