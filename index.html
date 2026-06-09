@@ -199,6 +199,15 @@
         <input type="date" id="doj" oninput="updateProgress()"/>
         <span class="err-msg">Please select a date</span>
       </div>
+      <div class="field">
+        <label>Date of Birth <span class="req">*</span></label>
+        <input type="date" id="dob" oninput="calcAge(); updateProgress()"/>
+        <span class="err-msg">Please select your date of birth</span>
+      </div>
+      <div class="field" id="ageDisplayField" style="display:none;">
+        <label>Age (Auto Calculated)</label>
+        <input type="text" id="ageDisplay" readonly style="background:#f4f7fb; color:var(--accent); font-weight:600;"/>
+      </div>
     </div>
   </div>
 
@@ -234,8 +243,6 @@
         <label>Highest Education Qualification <span class="req">*</span></label>
         <select id="highestEdu" onchange="updateProgress()">
           <option value="">-- Select Qualification --</option>
-          <option>10th (SSC)</option>
-          <option>12th (HSC)</option>
           <option>Diploma</option>
           <option>ITI</option>
           <option>Bachelor of Arts (BA)</option>
@@ -323,6 +330,22 @@
     <span class="err-msg" id="ctcErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must agree to the CTC structure to proceed</span>
   </div>
 
+  <!-- Section 5b: Background -->
+  <div class="section">
+    <div class="section-title">&#128274; Background Verification</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:1.25rem;">As part of our standard onboarding process, we conduct background checks for all new employees. Your honest response helps us complete the process smoothly.</p>
+    <div class="field">
+      <label>Are there any legal proceedings or court matters currently associated with your name? <span class="req">*</span></label>
+      <select id="criminalRecord" onchange="updateProgress()">
+        <option value="">-- Please Select --</option>
+        <option value="No">No, there are no such matters</option>
+        <option value="Yes">Yes, there is a matter I would like to declare</option>
+      </select>
+      <span class="err-msg">Please select an option</span>
+      <p class="hint" style="margin-top:6px;">&#128274; This information is kept strictly confidential and is used only for verification purposes.</p>
+    </div>
+  </div>
+
   <!-- Section 5: Declaration -->
   <div class="section">
     <div class="section-title">&#128221; Declaration</div>
@@ -358,6 +381,11 @@
 </div>
 
 <script>
+// Set DOB max to today
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('dob').max = new Date().toISOString().split('T')[0];
+});
+
 // Fill year dropdown
 (function(){
   const sel = document.getElementById('yearOfPassing');
@@ -371,7 +399,7 @@
 
 // Progress tracking
 function updateProgress(){
-  const fields = ['fullName','contactNumber','emailId','doj','currentLocation','preferableLocation','highestEdu','yearOfPassing'];
+  const fields = ['fullName','contactNumber','emailId','doj','dob','currentLocation','preferableLocation','highestEdu','yearOfPassing','criminalRecord'];
   const filled = fields.filter(id => document.getElementById(id).value.trim() !== '').length;
   const ctcOk = document.getElementById('ctcAgree').checked ? 1 : 0;
   const declOk = document.getElementById('declAgree').checked ? 1 : 0;
@@ -426,6 +454,7 @@ function submitForm(){
     {id:'contactNumber', msg:'Enter contact number'},
     {id:'emailId', msg:'Enter valid email'},
     {id:'doj', msg:'Select date of joining'},
+    {id:'dob', msg:'Select your date of birth'},
     {id:'currentLocation', msg:'Enter current location'},
     {id:'preferableLocation', msg:'Select preferred location'},
     {id:'highestEdu', msg:'Select qualification'},
@@ -442,6 +471,11 @@ function submitForm(){
       el.classList.remove('error');
     }
   });
+
+  // Criminal record
+  const crimSel = document.getElementById('criminalRecord');
+  if(!crimSel.value){ crimSel.classList.add('error'); valid = false; }
+  else crimSel.classList.remove('error');
 
   // Email
   const email = document.getElementById('emailId');
@@ -495,10 +529,13 @@ function submitForm(){
     'Current Location': document.getElementById('currentLocation').value.trim(),
     'Preferable Location': document.getElementById('preferableLocation').value,
     'CTC Agreed': 'Yes – ₹3,00,000 p.a.',
+    'Date of Birth': document.getElementById('dob').value,
+    'Age': document.getElementById('ageDisplay').value,
     'Date of Joining': document.getElementById('doj').value,
     'Highest Education': document.getElementById('highestEdu').value,
     'Year of Passing': document.getElementById('yearOfPassing').value,
     'Certificate Uploaded': certFile ? certFile.name : 'N/A',
+    'Legal Proceedings': document.getElementById('criminalRecord').value,
     'Submission Date': new Date().toLocaleDateString('en-IN'),
     'Submission Time': new Date().toLocaleTimeString('en-IN'),
   };
@@ -522,6 +559,9 @@ function submitForm(){
     'Highest Education': submittedData['Highest Education'],
     'Year of Passing': submittedData['Year of Passing'],
     'Certificate File Name': submittedData['Certificate Uploaded'] || submittedData['Certificate File Name'],
+    'Date of Birth': submittedData['Date of Birth'],
+    'Age': submittedData['Age'],
+    'Legal Proceedings': submittedData['Legal Proceedings'],
     'Submission Date': submittedData['Submission Date'],
     'Submission Time': submittedData['Submission Time'],
   };
@@ -604,6 +644,22 @@ function resetForm(){
   document.getElementById('certFileName').style.display = 'none';
   updateProgress();
   window.scrollTo({top:0});
+}
+
+// Age Calculator
+function calcAge(){
+  const dobVal = document.getElementById('dob').value;
+  const field = document.getElementById('ageDisplayField');
+  if(!dobVal){ field.style.display='none'; return; }
+  const dob = new Date(dobVal);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if(m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  if(age >= 0 && age < 100){
+    document.getElementById('ageDisplay').value = age + ' years';
+    field.style.display = 'flex';
+  }
 }
 
 // Submission popup with confetti
