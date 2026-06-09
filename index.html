@@ -6,6 +6,21 @@
 <title>Candidate Information Form</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+  /* Popup Overlay */
+  .popup-overlay { position: fixed; inset: 0; background: rgba(10,20,40,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+  .popup-box { background: white; border-radius: 20px; padding: 2.5rem 2rem; text-align: center; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .popup-emoji { font-size: 64px; margin-bottom: 0.5rem; animation: bounce 1s infinite alternate; display: block; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+  .popup-title { font-size: 1.6rem; font-weight: 800; color: #1a3c5e; line-height: 1.3; margin-bottom: 0.5rem; }
+  .popup-title span { color: #2979c8; }
+  .popup-subtitle { font-size: 1rem; color: #6b7f92; margin-bottom: 1.75rem; line-height: 1.5; }
+  .popup-btn { background: linear-gradient(135deg, #2979c8, #1a3c5e); color: white; border: none; border-radius: 50px; padding: 14px 48px; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(41,121,200,0.4); transition: transform 0.2s, box-shadow 0.2s; }
+  .popup-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(41,121,200,0.5); }
+  .popup-btn:active { transform: scale(0.97); }
+  .confetti-piece { position: absolute; width: 10px; height: 10px; border-radius: 2px; animation: confettiFall linear infinite; }
+  @keyframes confettiFall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(500px) rotate(720deg); opacity: 0; } }
+
   :root {
     --primary: #1a3c5e;
     --primary-light: #e8f0f7;
@@ -85,9 +100,13 @@
   .ctc-card tr.section-row td { background: #dce8f4; font-weight: 600; font-size: 12px; color: var(--primary); letter-spacing: 0.5px; padding: 5px 14px; }
   .ctc-card tr.total-row td { background: var(--primary); color: white; font-weight: 600; }
   .ctc-card td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
-  .ctc-agree { display: flex; align-items: flex-start; gap: 10px; margin-top: 1rem; padding: 0.9rem 1rem; background: var(--white); border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; }
-  .ctc-agree input[type=checkbox] { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-  .ctc-agree label { font-size: 13px; color: var(--text); cursor: pointer; line-height: 1.5; }
+  .ctc-agree { display: flex; align-items: center; gap: 14px; margin-top: 1rem; padding: 1.1rem 1.25rem; background: var(--white); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: border 0.2s, background 0.2s; user-select: none; }
+  .ctc-agree:hover { border-color: var(--accent); background: var(--primary-light); }
+  .ctc-agree input[type=checkbox] { display: none; }
+  .ctc-agree .custom-check { width: 26px; height: 26px; min-width: 26px; border: 2px solid var(--border); border-radius: 6px; background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; transition: all 0.2s; }
+  .ctc-agree.checked .custom-check { background: var(--accent); border-color: var(--accent); }
+  .ctc-agree.checked { border-color: var(--accent); background: var(--primary-light); }
+  .ctc-agree label { font-size: 13.5px; color: var(--text); cursor: pointer; line-height: 1.6; }
   .ctc-agree.error-border { border-color: #c0392b; }
 
   /* Declaration */
@@ -111,6 +130,17 @@
 </style>
 </head>
 <body>
+
+<!-- Congratulations Popup -->
+<div class="popup-overlay" id="congratsPopup">
+  <div class="popup-box" id="popupBox">
+    <!-- Confetti injected by JS -->
+    <span class="popup-emoji">🎉</span>
+    <div class="popup-title">Congratulations!!!</div>
+    <div class="popup-subtitle">You are Selected for the Role</div>
+    <button class="popup-btn" onclick="closePopup()">Continue &nbsp;→</button>
+  </div>
+</div>
 
 <div class="header">
   <div class="header-logo">Human Resources</div>
@@ -268,6 +298,7 @@
 
     <div class="ctc-agree" id="ctcAgreeBox" onclick="toggleCTC()">
       <input type="checkbox" id="ctcAgree" onchange="updateProgress()"/>
+      <div class="custom-check" id="ctcCheckIcon"></div>
       <label for="ctcAgree">I have read and understood the above CTC structure. I agree to the offered compensation package of <strong>₹3,00,000 per annum (Total CTC including ESIC)</strong> and accept it without any conditions.</label>
     </div>
     <span class="err-msg" id="ctcErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must agree to the CTC structure to proceed</span>
@@ -281,6 +312,7 @@
     </div>
     <div class="ctc-agree" id="declAgreeBox" style="margin-top:1rem;" onclick="toggleDecl()">
       <input type="checkbox" id="declAgree" onchange="updateProgress()"/>
+      <div class="custom-check" id="declCheckIcon"></div>
       <label for="declAgree">I have read the above declaration and confirm that all information provided is accurate and truthful.</label>
     </div>
     <span class="err-msg" id="declErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must accept the declaration to submit</span>
@@ -335,11 +367,19 @@ function updateProgress(){
 function toggleCTC(){
   const cb = document.getElementById('ctcAgree');
   cb.checked = !cb.checked;
+  const box = document.getElementById('ctcAgreeBox');
+  const icon = document.getElementById('ctcCheckIcon');
+  if(cb.checked){ box.classList.add('checked'); icon.textContent='✓'; } 
+  else { box.classList.remove('checked'); icon.textContent=''; }
   updateProgress();
 }
 function toggleDecl(){
   const cb = document.getElementById('declAgree');
   cb.checked = !cb.checked;
+  const box = document.getElementById('declAgreeBox');
+  const icon = document.getElementById('declCheckIcon');
+  if(cb.checked){ box.classList.add('checked'); icon.textContent='✓'; } 
+  else { box.classList.remove('checked'); icon.textContent=''; }
   updateProgress();
 }
 
@@ -545,6 +585,35 @@ function resetForm(){
   document.getElementById('certFileName').style.display = 'none';
   updateProgress();
   window.scrollTo({top:0});
+}
+
+// Confetti
+(function(){
+  const colors = ['#2979c8','#f0c040','#e84040','#40c070','#a040e8','#ff8c00','#00bcd4'];
+  const box = document.getElementById('popupBox');
+  for(let i = 0; i < 28; i++){
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `
+      left: ${Math.random()*100}%;
+      top: ${Math.random()*30}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${6+Math.random()*8}px;
+      height: ${6+Math.random()*8}px;
+      border-radius: ${Math.random()>0.5?'50%':'2px'};
+      animation-duration: ${1.5+Math.random()*2.5}s;
+      animation-delay: ${Math.random()*2}s;
+    `;
+    box.appendChild(c);
+  }
+})();
+
+function closePopup(){
+  const overlay = document.getElementById('congratsPopup');
+  overlay.style.animation = 'fadeOut 0.4s forwards';
+  overlay.style.transition = 'opacity 0.4s';
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.style.display = 'none', 400);
 }
 </script>
 </body>
