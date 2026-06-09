@@ -6,6 +6,16 @@
 <title>Candidate Information Form</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+  /* Submission Success Popup */
+  .submit-popup-overlay { position: fixed; inset: 0; background: rgba(10,20,40,0.75); z-index: 9999; display: none; align-items: center; justify-content: center; }
+  .submit-popup-overlay.active { display: flex; }
+  .submit-popup-box { background: white; border-radius: 20px; padding: 2.5rem 2rem; text-align: center; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  .submit-popup-emoji { font-size: 64px; margin-bottom: 0.5rem; display: block; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  .submit-popup-title { font-size: 1.35rem; font-weight: 800; color: #1a3c5e; line-height: 1.4; margin-bottom: 0.6rem; }
+  .submit-popup-subtitle { font-size: 0.95rem; color: #6b7f92; line-height: 1.6; margin-bottom: 0.5rem; }
+  .submit-confetti-piece { position: absolute; width: 10px; height: 10px; border-radius: 2px; animation: confettiFall linear infinite; }
+
   /* Popup Overlay */
   .popup-overlay { position: fixed; inset: 0; background: rgba(10,20,40,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; }
   .popup-box { background: white; border-radius: 20px; padding: 2.5rem 2rem; text-align: center; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
@@ -131,6 +141,15 @@
 </head>
 <body>
 
+<!-- Submission Success Popup -->
+<div class="submit-popup-overlay" id="submitPopup">
+  <div class="submit-popup-box" id="submitPopupBox">
+    <span class="submit-popup-emoji">📋</span>
+    <div class="submit-popup-title">Your application is submitted!</div>
+    <div class="submit-popup-subtitle">Please wait for further communication.<br/>Our HR team will reach out to you shortly.</div>
+  </div>
+</div>
+
 <!-- Congratulations Popup -->
 <div class="popup-overlay" id="congratsPopup">
   <div class="popup-box" id="popupBox">
@@ -154,7 +173,7 @@
   <div class="progress-label" id="progressLabel">0 of 6 sections</div>
 </div>
 
-<div class="container" id="formContainer">
+<div class="container" id="formContainer" style="display:none;">
 
   <!-- Section 1: Personal Info -->
   <div class="section">
@@ -489,7 +508,7 @@ function submitForm(){
   btn.disabled = true;
   btn.textContent = '⏳  Submitting...';
 
-  const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/amnex.com/s/AKfycbx-0KtmSvdveHBHJCvnGDSErL2Q8WsuqmrVy0b8UgZ5avOfienQDnQpLzd3SrnUMiQ5/exec';
+  const APPS_SCRIPT_URL = 'https://sheetdb.io/api/v1/aulqylrchuqkw';
 
   const payload = {
     'Position Applied For': submittedData['Position Applied For'],
@@ -509,26 +528,26 @@ function submitForm(){
 
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ data: payload })
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ data: [payload] })
   })
-  .then(res => res.json())
+  .then(res => {
+    if(!res.ok) throw new Error('Network error: ' + res.status);
+    return res.json();
+  })
   .then(result => {
-    if(result.created || result[0]) {
-      document.getElementById('formContainer').style.display = 'none';
-      document.getElementById('successContainer').style.display = 'block';
-      document.getElementById('successName').textContent = submittedData['Full Name'];
-      window.scrollTo({top:0, behavior:'smooth'});
-    } else {
-      throw new Error('Unexpected response');
-    }
+    console.log('SheetDB response:', JSON.stringify(result));
+    // Show submission success popup
+    showSubmitPopup();
   })
-  .catch(() => {
-    // SheetDB succeeded (no-cors fallback) — show success anyway
-    document.getElementById('formContainer').style.display = 'none';
-    document.getElementById('successContainer').style.display = 'block';
-    document.getElementById('successName').textContent = submittedData['Full Name'];
-    window.scrollTo({top:0, behavior:'smooth'});
+  .catch(err => {
+    console.error('Submission error:', err);
+    btn.disabled = false;
+    btn.textContent = '✓  Submit My Information';
+    alert('Submission failed: ' + err.message + '\n\nPlease check your internet and try again.');
   });
 }
 
@@ -587,6 +606,35 @@ function resetForm(){
   window.scrollTo({top:0});
 }
 
+// Submission popup with confetti
+function showSubmitPopup(){
+  const overlay = document.getElementById('submitPopup');
+  const box = document.getElementById('submitPopupBox');
+  overlay.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  // Add confetti
+  const colors = ['#2979c8','#f0c040','#e84040','#40c070','#a040e8','#ff8c00','#00bcd4'];
+  for(let i = 0; i < 28; i++){
+    const c = document.createElement('div');
+    c.className = 'submit-confetti-piece';
+    c.style.cssText = `
+      left: ${Math.random()*100}%;
+      top: ${Math.random()*30}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${6+Math.random()*8}px;
+      height: ${6+Math.random()*8}px;
+      border-radius: ${Math.random()>0.5?'50%':'2px'};
+      animation-duration: ${1.5+Math.random()*2.5}s;
+      animation-delay: ${Math.random()*2}s;
+    `;
+    box.appendChild(c);
+  }
+
+  // Hide form behind popup
+  document.getElementById('formContainer').style.display = 'none';
+}
+
 // Confetti
 (function(){
   const colors = ['#2979c8','#f0c040','#e84040','#40c070','#a040e8','#ff8c00','#00bcd4'];
@@ -610,10 +658,13 @@ function resetForm(){
 
 function closePopup(){
   const overlay = document.getElementById('congratsPopup');
-  overlay.style.animation = 'fadeOut 0.4s forwards';
   overlay.style.transition = 'opacity 0.4s';
   overlay.style.opacity = '0';
-  setTimeout(() => overlay.style.display = 'none', 400);
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.getElementById('formContainer').style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }, 400);
 }
 </script>
 </body>
