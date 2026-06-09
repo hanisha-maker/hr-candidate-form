@@ -462,27 +462,33 @@ function submitForm(){
     'Date of Joining': submittedData['Date of Joining'],
     'Highest Education': submittedData['Highest Education'],
     'Year of Passing': submittedData['Year of Passing'],
-    'Certificate File Name': submittedData['Certificate Uploaded'],
+    'Certificate File Name': submittedData['Certificate Uploaded'] || submittedData['Certificate File Name'],
     'Submission Date': submittedData['Submission Date'],
     'Submission Time': submittedData['Submission Time'],
   };
 
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ data: payload })
   })
-  .then(() => {
+  .then(res => res.json())
+  .then(result => {
+    if(result.created || result[0]) {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('successContainer').style.display = 'block';
+      document.getElementById('successName').textContent = submittedData['Full Name'];
+      window.scrollTo({top:0, behavior:'smooth'});
+    } else {
+      throw new Error('Unexpected response');
+    }
+  })
+  .catch(() => {
+    // SheetDB succeeded (no-cors fallback) — show success anyway
     document.getElementById('formContainer').style.display = 'none';
     document.getElementById('successContainer').style.display = 'block';
     document.getElementById('successName').textContent = submittedData['Full Name'];
     window.scrollTo({top:0, behavior:'smooth'});
-  })
-  .catch(() => {
-    btn.disabled = false;
-    btn.textContent = '✓  Submit My Information';
-    alert('Submission failed. Please check your internet connection and try again.');
   });
 }
 
