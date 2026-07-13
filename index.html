@@ -164,7 +164,7 @@
 <div class="header">
   <div class="header-logo">Human Resources</div>
   <h1>Candidate Information Form</h1>
-  <p style="font-size:1rem; font-weight:600; background:rgba(255,255,255,0.15); display:inline-block; padding:4px 18px; border-radius:99px; margin-bottom:0.4rem;">Position: Associate Engineer (RTMC)</p><br/>
+  <p style="font-size:1rem; font-weight:600; background:rgba(255,255,255,0.15); display:inline-block; padding:4px 18px; border-radius:99px; margin-bottom:0.4rem;">Position: Associate Engineer</p><br/>
   <p>Please fill in all details carefully. This information will be used for your HR records.</p>
 </div>
 
@@ -225,10 +225,10 @@
         <select id="preferableLocation" onchange="updateProgress()">
           <option value="">-- Select Preferred Location --</option>
           <option>Malegaon</option>
+          <option>Nidhona</option>
+          <option>Maliwada</option>
           <option>Shirdi</option>
           <option>Igatpuri</option>
-          <option>Nidhona</option>
-          <option>Amne</option>
         </select>
         <span class="err-msg">Please select a preferred location</span>
       </div>
@@ -306,24 +306,24 @@
         <tbody>
           <tr class="section-row"><td colspan="3">EARNINGS</td></tr>
           <tr><td>Basic Salary</td><td>14,500</td><td>1,74,000</td></tr>
-          <tr><td>Other Allowances</td><td>6,972</td><td>83,666</td></tr>
+          <tr><td>Other Allowances</td><td>2,081</td><td>24,971</td></tr>
           <tr><td>Bonus (Performance Linked)</td><td>1,208</td><td>14,494</td></tr>
-          <tr class="section-row"><td>GROSS SALARY</td><td>22,680</td><td>2,72,160</td></tr>
+          <tr class="section-row"><td>GROSS SALARY</td><td>17,789</td><td>2,13,465</td></tr>
 
           <tr class="section-row"><td colspan="3">DEDUCTIONS (Employee)</td></tr>
           <tr><td>Employee PF</td><td>1,740</td><td>20,880</td></tr>
           <tr><td>Employee ESIC</td><td>109</td><td>1,305</td></tr>
           <tr><td>Professional Tax</td><td>200</td><td>2,400</td></tr>
 
-          <tr class="section-row"><td>TAKE HOME SALARY</td><td>20,740</td><td>2,48,880</td></tr>
+          <tr class="section-row"><td>TAKE HOME SALARY</td><td>15,740</td><td>1,88,880</td></tr>
 
           <tr class="section-row"><td colspan="3">STATUTORY BENEFITS (Employer)</td></tr>
           <tr><td>Employer PF</td><td>1,740</td><td>20,880</td></tr>
           <tr><td>Employer ESIC</td><td>471</td><td>5,655</td></tr>
 
-          <tr class="section-row"><td>FIXED CTC</td><td>24,420</td><td>2,93,040</td></tr>
+          <tr class="section-row"><td>FIXED CTC</td><td>20,000</td><td>2,40,000</td></tr>
           <tr><td>PLI (Performance Linked Incentive)</td><td>—</td><td>—</td></tr>
-          <tr class="total-row"><td>TOTAL CTC (Including ESIC)</td><td>25,000</td><td>3,00,000</td></tr>
+          <tr class="total-row"><td>TOTAL CTC (Including ESIC)</td><td>20,000</td><td>2,40,000</td></tr>
         </tbody>
       </table>
     </div>
@@ -331,7 +331,7 @@
     <div class="ctc-agree" id="ctcAgreeBox" onclick="toggleCTC()">
       <input type="checkbox" id="ctcAgree" onchange="updateProgress()"/>
       <div class="custom-check" id="ctcCheckIcon"></div>
-      <label for="ctcAgree">I have read and understood the above CTC structure. I agree to the offered compensation package of <strong>₹3,00,000 per annum (Total CTC including ESIC)</strong> and accept it without any conditions.</label>
+      <label for="ctcAgree">I have read and understood the above CTC structure. I agree to the offered compensation package of <strong>₹2,40,000 per annum (Total CTC including ESIC)</strong> and accept it without any conditions.</label>
     </div>
     <span class="err-msg" id="ctcErr" style="display:none; font-size:11.5px; color:#c0392b; margin-top:4px;">You must agree to the CTC structure to proceed</span>
   </div>
@@ -528,13 +528,13 @@ async function submitForm(){
   // Collect data
   const certFile = document.getElementById('certFile').files[0];
   submittedData = {
-    'Position Applied For': 'Associate Engineer (RTMC)',
+    'Position Applied For': 'Associate Engineer',
     'Full Name': document.getElementById('fullName').value.trim(),
     'Contact Number': document.getElementById('contactNumber').value.trim(),
     'Email ID': document.getElementById('emailId').value.trim(),
     'Current Location': document.getElementById('currentLocation').value.trim(),
     'Preferable Location': document.getElementById('preferableLocation').value,
-    'CTC Agreed': 'Yes – ₹3,00,000 p.a.',
+    'CTC Agreed': 'Yes – ₹2,40,000 p.a.',
     'Date of Birth': (function(){ const d = document.getElementById('dob').value; if(!d) return ''; const [y,m,dd] = d.split('-'); return dd+'/'+m+'/'+y; })(),
     'Age': document.getElementById('ageDisplay').value,
     'Date of Joining': (function(){ const d = document.getElementById('doj').value; if(!d) return ''; const [y,m,dd] = d.split('-'); return dd+'/'+m+'/'+y; })(),
@@ -626,20 +626,20 @@ function downloadExcel(){
     ['CTC STRUCTURE', 'Monthly (₹)', 'Yearly (₹)'],
     ['--- EARNINGS ---','',''],
     ['Basic Salary','14,500','1,74,000'],
-    ['Other Allowances','6,972','83,666'],
+    ['Other Allowances','2,081','24,971'],
     ['Bonus (PLI)','1,208','14,494'],
-    ['GROSS SALARY','22,680','2,72,160'],
+    ['GROSS SALARY','17,789','2,13,465'],
     ['--- DEDUCTIONS (Employee) ---','',''],
     ['Employee PF','1,740','20,880'],
     ['Employee ESIC','109','1,305'],
     ['Professional Tax','200','2,400'],
-    ['TAKE HOME SALARY','20,740','2,48,880'],
+    ['TAKE HOME SALARY','15,740','1,88,880'],
     ['--- STATUTORY BENEFITS (Employer) ---','',''],
     ['Employer PF','1,740','20,880'],
     ['Employer ESIC','471','5,655'],
-    ['FIXED CTC','24,420','2,93,040'],
+    ['FIXED CTC','20,000','2,40,000'],
     ['PLI','—','—'],
-    ['TOTAL CTC (Including ESIC)','25,000','3,00,000'],
+    ['TOTAL CTC (Including ESIC)','20,000','2,40,000'],
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(ctcData);
   ws2['!cols'] = [{wch:35},{wch:18},{wch:18}];
